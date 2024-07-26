@@ -248,13 +248,14 @@ df <- map(df_file$name, function(xlsx_file) {
   map(sheets, function(sheet) {
     read.xlsx(xlsx_file, startRow = 4, sheet = sheet) %>%
       rename(pref_code = 都道府県コード, 
-             pref_name = 都道府県名, 
+             pref_name = 都道府県名,
+             hosp_num = 医療機関番号, 
              hosp_name = "医療機関名称",
              name = "受理届出名称", 
              date = "算定開始年月日", 
              kigo = "受理記号", 
              bango = "受理番号") %>%
-      select(pref_code, pref_name, hosp_name, name, date, kigo, bango) |> 
+      select(pref_code, pref_name, hosp_num, hosp_name, name, date, kigo, bango) |> 
       dplyr::filter(!is.na(name)) |> 
       distinct(pref_code, hosp_name, kigo, .keep_all = TRUE)
   }) |> list_rbind()
@@ -279,9 +280,9 @@ piv_pref <- df |>
   left_join(df_pref, by = "pref_code") |> 
   select(pref_code, pref_name, max_date)
 
+file.remove(df_file$name)
+write_excel_csv(df, str_c("status_",Sys.Date(),".csv"))
+
 df_chimedi <- df |> 
   dplyr::filter(str_detect(name, "地域包括医療病棟"))
-
-file.remove(df_file$name)
 write_excel_csv(df_chimedi, "chimedi_hosps.csv")
-write_excel_csv(df, str_c("status_",Sys.Date(),".csv"))
