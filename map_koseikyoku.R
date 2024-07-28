@@ -183,6 +183,7 @@ for (subdir in unzip_subdirs) {
 #downloadディレクトリを削除します
 unlink(download_dir, recursive = TRUE)
 
+
 #九州
 # ターゲットURL
 url <- "https://kouseikyoku.mhlw.go.jp/kyushu/gyomu/gyomu/hoken_kikan/index_00007.html"
@@ -191,19 +192,32 @@ url <- "https://kouseikyoku.mhlw.go.jp/kyushu/gyomu/gyomu/hoken_kikan/index_0000
 web_page <- read_html(url)
 links <- web_page %>% html_nodes("a:contains('エクセルデータ（ZIP）')") %>% html_attr("href")
 
+# 最新ファイル判定のための正規表現を作成
+latest_prefix <- max(gsub("^.*/([^_]+_[0-9]+)_.*$", "\\1", links))
+
 # ダウンロードディレクトリを設定します
 download_dir <- "downloads"
 if (!dir.exists(download_dir)) {
   dir.create(download_dir)
 }
 
-# リンク先のZIPファイルを全てダウンロードします
-for (link in links) {
+# ダウンロードディレクトリを設定します
+download_dir <- "downloads"
+if (!dir.exists(download_dir)) {
+  dir.create(download_dir)
+}
+
+# 最新のリンクのみを抽出してダウンロード
+latest_links <- links[grepl(paste0(latest_prefix), links)]
+  
+for (link in latest_links) {
   zip_url <- paste0("https://kouseikyoku.mhlw.go.jp", link)
   zip_filename <- basename(zip_url)
   zip_filepath <- file.path(download_dir, zip_filename)
   download.file(zip_url, zip_filepath)
 }
+
+list.files("./downloads")
 
 # 解凍用ディレクトリを設定します
 unzip_dir <- "unzipped"
@@ -224,7 +238,8 @@ original_dir <- getwd()
 zip_files <- list.files(download_dir, pattern = "\\.zip$", full.names = TRUE)
 for (zip_file in zip_files) {
   unzip(zip_file, exdir = unzip_dir)
-  files <- list.files(unzip_dir, pattern = "r6_07.*_ika_.*\\.xlsx$", full.names = TRUE)
+  files <- list.files(unzip_dir,
+     pattern = str_c(latest_prefix, ".*_ika_.*\\.xlsx$"), full.names = TRUE)
   if (length(files) > 0) {
     file.copy(files, original_dir, overwrite = TRUE) 
   }
@@ -282,6 +297,7 @@ piv_pref <- df |>
 
 file.remove(df_file$name)
 write_excel_csv(df, str_c("status_",Sys.Date(),".csv"))
+write_excel_csv(piv_pref, str_c("update_date_",Sys.Date(),".csv"))
 
 df_chimedi <- df |> 
   dplyr::filter(str_detect(name, "地域包括医療病棟"))
