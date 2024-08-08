@@ -251,10 +251,10 @@ df_file <- dplyr::tibble(name = list.files()) |>
   mutate(extension = str_sub(name, -5, -1)) |> 
   dplyr::filter(extension == ".xlsx")
 
-df_raw <- map(df_file$name, function(xlsx_file) {
-  sheets <- getSheetNames(xlsx_file)
-  map(sheets, function(sheet) {
-    read.xlsx(xlsx_file, startRow = 4, sheet = sheet) |> 
+df_raw <- map(df_file$name, function(fn_xlsx_file) {
+  sheets <- getSheetNames(fn_xlsx_file)
+  map(sheets, function(fn_sheet) {
+    read.xlsx(fn_xlsx_file, startRow = 4, sheet = fn_sheet) |> 
     mutate(across(everything(), as.character))
   }) |> list_rbind()
 }) |> list_rbind()
