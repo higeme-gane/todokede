@@ -125,10 +125,10 @@ file.remove(df_shika_yakkyoku$full_link)
 setwd(original_dir)
 
 #ダウンロードしたファイルを読み込みデータ処理
-df_file <- dplyr::tibble(full_path = dir_ls(download_dir)) |> 
+df_file <- dplyr::tibble(full_path = dir_ls("downloads")) |> 
   mutate(extension = str_extract(full_path, "\\.[a-zA-Z0-9]+$")) |> 
   dplyr::filter(extension == ".xlsx")
-read.xlsx(df_file$full_path[1])
+
 #47都道府県のエクセルデータを結合。
 df_raw <- map(df_file$full_path, function(fn_xlsx_file) {
   sheets <- getSheetNames(fn_xlsx_file)
